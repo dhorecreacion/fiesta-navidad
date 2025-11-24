@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control de adicionales por DNI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 16px;
+      background: #f5f5f9;
+    }
+    h2 {
+      margin-bottom: 8px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      max-width: 430px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-top: 8px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      background: #304ffe;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    button.success {
+      background: #00c853;
+    }
+    .result {
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+    .msg {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .msg.info {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+    .msg.error {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    video {
+      width: 100%;
+      max-width: 430px;
+      border-radius: 10px;
+      margin-top: 10px;
+      background: #000;
+    }
+
+    /* ---- NUEVO DISEÑO DE INDICADORES ---- */
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .stat-box {
+      background: #f5f7ff;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .stat-box.secondary {
+      background: #e8f5e9;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #555;
+      margin: 0;
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Control de adicionales por DNI</h2>
+  <p class="small">
+    Escanea o ingresa un DNI para ver adicionales y marcar ingreso a la fiesta.
+  </p>
+
+  <!-- Indicadores -->
+  <div class="card">
+    <h3>Resumen rápido</h3>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <p class="stat-label">Familias registradas</p>
+        <p class="stat-value" id="indTitulares">0</p>
+      </div>
+
+      <div class="stat-box">
+        <p class="stat-label">Capacidad máxima</p>
+        <p class="stat-value" id="indPersonasPosibles">0</p>
+      </div>
+
+      <div class="stat-box secondary">
+        <p class="stat-label">Familias dentro</p>
+        <p class="stat-value" id="indTitularesIngresaron">0</p>
+      </div>
+
+      <div class="stat-box secondary">
+        <p class="stat-label">Personas dentro</p>
+        <p class="stat-value" id="indPersonasIngresaron">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Consulta -->
+  <div class="card">
+    <label for="dniInput">DNI del titular</label>
+    <input id="dniInput" type="text" placeholder="Ejemplo: 12345678" />
+
+    <button id="btnConsultar">Consultar</button>
+    <button id="btnCamara" class="secondary">Activar cámara (leer DNI)</button>
+
+    <div id="result" class="result"></div>
+
+    <button id="btnMarcarIngreso" class="success" style="display:none;">
+      Marcar ingreso a la fiesta
+    </button>
+  </div>
+
+  <!-- Cámara -->
+  <div class="card">
+    <h3>Cámara</h3>
+    <p class="small">Apunta al código de barras del reverso del DNI.</p>
+    <video id="video" autoplay playsinline style="display:none;"></video>
+  </div>
+
+  <!-- Nuevo registro -->
+  <div id="nuevoRegistroCard" class="card" style="display:none;">
+    <h3>Registrar nuevo titular</h3>
+
+    <label>DNI del titular</label>
+    <input id="dniNuevo" type="text" readonly />
+
+    <label>Nombre del titular</label>
+    <input id="nombreNuevo" type="text" />
+
+    <label>Adicionales totales</label>
+    <input id="adicionalesNuevo" type="number" min="0" />
+
+    <label>Hijos</label>
+    <input id="hijosNuevo" type="number" min="0" />
+
+    <button id="btnGuardar">Guardar registro</button>
+    <button class="secondary" id="btnCancelar">Cancelar</button>
+
+    <div id="msgNuevo" class="msg" style="display:none;"></div>
+  </div>
+
+  <!-- Librería ZXing -->
+  <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
+
+  <script>
+    /* ------------------ BASE DE DATOS ------------------ */
+
+    const registros = [
+      {
+        dniTitular: "12345678",
+        nombreTitular: "Juan Pérez",
+        adicionalesTotales: 4,
+        hijosTotales: 2,
+        ingreso: false
+      },
+      {
+        dniTitular: "87654321",
+        nombreTitular: "María Gómez",
+        adicionalesTotales: 1,
+        hijosTotales: 1,
+        ingreso: true
+      }
+    ];
+
+    /* ------------------ ELEMENTOS ------------------ */
+
+    const dniInput = document.getElementById("dniInput");
+    const resultDiv = document.getElementById("result");
+    const nuevoCard = document.getElementById("nuevoRegistroCard");
+    const btnMarcarIngreso = document.getElementById("btnMarcarIngreso");
+    const video = document.getElementById("video");
+
+    const indTitulares = document.getElementById("indTitulares");
+    const indPersonasPosibles = document.getElementById("indPersonasPosibles");
+    const indTitularesIngresaron = document.getElementById("indTitularesIngresaron");
+    const indPersonasIngresaron = document.getElementById("indPersonasIngresaron");
+
+    let ultimoDniConsultado = null;
+    let codeReader = null;
+    let escaneando = false;
+
+    /* ------------------ INDICADORES ------------------ */
+
+    function actualizarIndicadores() {
+      const familias = registros.length;
+      let personasPosibles = 0;
+      let familiasDentro = 0;
+      let personasDentro = 0;
+
+      registros.forEach(r => {
+        personasPosibles += 1 + r.adicionalesTotales;
+        if (r.ingreso) {
+          familiasDentro += 1;
+          personasDentro += 1 + r.adicionalesTotales;
+        }
+      });
+
+      indTitulares.textContent = familias;
+      indPersonasPosibles.textContent = personasPosibles;
+      indTitularesIngresaron.textContent = familiasDentro;
+      indPersonasIngresaron.textContent = personasDentro;
+    }
+
+    actualizarIndicadores();
+
+    /* ------------------ CONSULTAR ------------------ */
+
+    document.getElementById("btnConsultar").onclick = consultar;
+
+    function consultar() {
+      const dni = dniInput.value.trim();
+      if (!dni) {
+        resultDiv.innerHTML = "<div class='msg error'>Ingresa un DNI.</div>";
+        return;
+      }
+
+      const r = registros.find(x => x.dniTitular === dni);
+
+      resultDiv.innerHTML = "";
+      nuevoCard.style.display = "none";
+      btnMarcarIngreso.style.display = "none";
+      ultimoDniConsultado = dni;
+
+      if (!r) {
+        resultDiv.innerHTML = `<div class='msg info'>No existe el DNI <strong>${dni}</strong>.</div>`;
+        document.getElementById("dniNuevo").value = dni;
+        nuevoCard.style.display = "block";
+        return;
+      }
+
+      const estado = r.ingreso
+        ? "<span style='color:green;'>✔ Ingresó</span>"
+        : "<span style='color:#b76e00;'>Pendiente</span>";
+
+      resultDiv.innerHTML = `
+        <p><strong>${r.nombreTitular}</strong> (${r.dniTitular})</p>
+        <p>Adicionales: <strong>${r.adicionalesTotales}</strong></p>
+        <p>Hijos: <strong>${r.hijosTotales}</strong></p>
+        <p>Estado: ${estado}</p>
+      `;
+
+      if (!r.ingreso) btnMarcarIngreso.style.display = "block";
+    }
+
+    /* ------------------ GUARDAR NUEVO ------------------ */
+
+    document.getElementById("btnGuardar").onclick = function () {
+      const dni = document.getElementById("dniNuevo").value;
+      const nombre = document.getElementById("nombreNuevo").value.trim();
+      const adicionales = Number(document.getElementById("adicionalesNuevo").value);
+      const hijos = Number(document.getElementById("hijosNuevo").value);
+
+      if (!nombre || isNaN(adicionales) || isNaN(hijos)) {
+        mostrarMsg("Completa todos los campos.", "error");
+        return;
+      }
+
+      registros.push({
+        dniTitular: dni,
+        nombreTitular: nombre,
+        adicionalesTotales: adicionales,
+        hijosTotales: hijos,
+        ingreso: false
+      });
+
+      consultar();
+      actualizarIndicadores();
+      mostrarMsg("Registrado correctamente.", "info");
+    };
+
+    document.getElementById("btnCancelar").onclick = () =>
+      (nuevoCard.style.display = "none");
+
+    function mostrarMsg(txt, tipo) {
+      const msg = document.getElementById("msgNuevo");
+      msg.textContent = txt;
+      msg.className = "msg " + tipo;
+      msg.style.display = "block";
+    }
+
+    /* ------------------ MARCAR INGRESO ------------------ */
+
+    btnMarcarIngreso.onclick = function () {
+      const r = registros.find(x => x.dniTitular === ultimoDniConsultado);
+      if (!r || r.ingreso) return;
+
+      r.ingreso = true;
+      consultar();
+      actualizarIndicadores();
+      alert("Ingreso registrado ✔");
+    };
+
+    /* ------------------ ESCÁNER DE DNI ------------------ */
+
+    document.getElementById("btnCamara").onclick = activarCamara;
+
+    function extraerDni(str) {
+      const m = str.match(/\b\d{8}\b/);
+      return m ? m[0] : null;
+    }
+
+    async function activarCamara() {
+      if (!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
+
+      if (!escaneando) {
+        escaneando = true;
+        video.style.display = "block";
+        document.getElementById("btnCamara").textContent = "Detener cámara";
+
+        await codeReader.decodeFromVideoDevice(
+          null,
+          "video",
+          (result, err) => {
+            if (result) {
+              const dni = extraerDni(result.getText());
+              if (dni) {
+                dniInput.value = dni;
+                consultar();
+                alert("DNI detectado: " + dni);
+                detenerCamara();
+              }
+            }
+          }
+        );
+      } else {
+        detenerCamara();
+      }
+    }
+
+    function detenerCamara() {
+      escaneando = false;
+      video.style.display = "none";
+      document.getElementById("btnCamara").textContent = "Activar cámara (leer DNI)";
+      if (codeReader) codeReader.reset();
+    }
+  </script>
+</body>
+</html>
