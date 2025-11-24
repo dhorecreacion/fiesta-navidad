@@ -10,9 +10,7 @@
       padding: 16px;
       background: #f5f5f9;
     }
-    h2 {
-      margin-bottom: 8px;
-    }
+    h2 { margin-bottom: 8px; }
     .card {
       background: #fff;
       border-radius: 10px;
@@ -47,69 +45,46 @@
       color: #fff;
       font-weight: 600;
     }
-    button.secondary {
-      background: #e0e0e0;
-      color: #333;
-    }
-    button.success {
-      background: #00c853;
-    }
-    .result {
-      margin-top: 12px;
-      font-size: 0.95rem;
-    }
+    button.secondary { background: #e0e0e0; color: #333; }
+    button.success { background: #00c853; }
+    .result { margin-top: 12px; font-size: 0.95rem; }
     .msg {
       padding: 8px 10px;
       border-radius: 6px;
       font-size: 0.9rem;
       margin-top: 8px;
     }
-    .msg.info {
-      background: #e3f2fd;
-      color: #0d47a1;
-    }
-    .msg.error {
-      background: #ffebee;
-      color: #b71c1c;
-    }
-    .small {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 4px;
-    }
+    .msg.info { background: #e3f2fd; color: #0d47a1; }
+    .msg.error { background: #ffebee; color: #b71c1c; }
+    .small { font-size: 0.8rem; color: #666; margin-top: 4px; }
     video {
       width: 100%;
       max-width: 430px;
       border-radius: 10px;
       margin-top: 10px;
       background: #000;
+      min-height: 220px; /* ayuda a que sea más grande en pantalla */
+      object-fit: cover;
     }
 
-    /* ---- NUEVO DISEÑO DE INDICADORES ---- */
-
+    /* Indicadores */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       margin-top: 8px;
     }
-
     .stat-box {
       background: #f5f7ff;
       border-radius: 8px;
       padding: 10px 12px;
     }
-
-    .stat-box.secondary {
-      background: #e8f5e9;
-    }
-
+    .stat-box.secondary { background: #e8f5e9; }
     .stat-label {
       font-size: 0.8rem;
       color: #555;
       margin: 0;
     }
-
     .stat-value {
       font-size: 1.4rem;
       font-weight: 700;
@@ -128,22 +103,19 @@
     <h3>Resumen rápido</h3>
     <div class="stats-grid">
       <div class="stat-box">
-        <p class="stat-label">Familias registradas</p>
+        <p class="stat-label">Familias contempladas</p>
         <p class="stat-value" id="indTitulares">0</p>
       </div>
-
       <div class="stat-box">
-        <p class="stat-label">Capacidad máxima</p>
+        <p class="stat-label">Capacidad total</p>
         <p class="stat-value" id="indPersonasPosibles">0</p>
       </div>
-
       <div class="stat-box secondary">
-        <p class="stat-label">Familias dentro</p>
+        <p class="stat-label">Familias registradas</p>
         <p class="stat-value" id="indTitularesIngresaron">0</p>
       </div>
-
       <div class="stat-box secondary">
-        <p class="stat-label">Personas dentro</p>
+        <p class="stat-label">Total registrado</p>
         <p class="stat-value" id="indPersonasIngresaron">0</p>
       </div>
     </div>
@@ -167,7 +139,10 @@
   <!-- Cámara -->
   <div class="card">
     <h3>Cámara</h3>
-    <p class="small">Apunta al código de barras del reverso del DNI.</p>
+    <p class="small">
+      Apunta al código de barras del reverso del DNI, acércalo hasta llenar la pantalla y manténlo quieto.
+      Si no lo lee, puedes escribir el DNI manualmente.
+    </p>
     <video id="video" autoplay playsinline style="display:none;"></video>
   </div>
 
@@ -198,26 +173,10 @@
 
   <script>
     /* ------------------ BASE DE DATOS ------------------ */
-
     const registros = [
-      {
-        dniTitular: "12345678",
-        nombreTitular: "Juan Pérez",
-        adicionalesTotales: 4,
-        hijosTotales: 2,
-        ingreso: false
-      },
-      {
-        dniTitular: "87654321",
-        nombreTitular: "María Gómez",
-        adicionalesTotales: 1,
-        hijosTotales: 1,
-        ingreso: true
-      }
     ];
 
     /* ------------------ ELEMENTOS ------------------ */
-
     const dniInput = document.getElementById("dniInput");
     const resultDiv = document.getElementById("result");
     const nuevoCard = document.getElementById("nuevoRegistroCard");
@@ -234,7 +193,6 @@
     let escaneando = false;
 
     /* ------------------ INDICADORES ------------------ */
-
     function actualizarIndicadores() {
       const familias = registros.length;
       let personasPosibles = 0;
@@ -254,11 +212,9 @@
       indTitularesIngresaron.textContent = familiasDentro;
       indPersonasIngresaron.textContent = personasDentro;
     }
-
     actualizarIndicadores();
 
     /* ------------------ CONSULTAR ------------------ */
-
     document.getElementById("btnConsultar").onclick = consultar;
 
     function consultar() {
@@ -296,16 +252,20 @@
       if (!r.ingreso) btnMarcarIngreso.style.display = "block";
     }
 
-    /* ------------------ GUARDAR NUEVO ------------------ */
-
-    document.getElementById("btnGuardar").onclick = function () {
+    /* ------------------ NUEVO REGISTRO ------------------ */
+    document.getElementById("btnGuardar").onclick = () => {
       const dni = document.getElementById("dniNuevo").value;
       const nombre = document.getElementById("nombreNuevo").value.trim();
       const adicionales = Number(document.getElementById("adicionalesNuevo").value);
       const hijos = Number(document.getElementById("hijosNuevo").value);
+      const msg = document.getElementById("msgNuevo");
+
+      msg.style.display = "none";
 
       if (!nombre || isNaN(adicionales) || isNaN(hijos)) {
-        mostrarMsg("Completa todos los campos.", "error");
+        msg.textContent = "Completa todos los campos.";
+        msg.className = "msg error";
+        msg.style.display = "block";
         return;
       }
 
@@ -319,22 +279,17 @@
 
       consultar();
       actualizarIndicadores();
-      mostrarMsg("Registrado correctamente.", "info");
+      msg.textContent = "Registrado correctamente.";
+      msg.className = "msg info";
+      msg.style.display = "block";
     };
 
-    document.getElementById("btnCancelar").onclick = () =>
-      (nuevoCard.style.display = "none");
-
-    function mostrarMsg(txt, tipo) {
-      const msg = document.getElementById("msgNuevo");
-      msg.textContent = txt;
-      msg.className = "msg " + tipo;
-      msg.style.display = "block";
-    }
+    document.getElementById("btnCancelar").onclick = () => {
+      nuevoCard.style.display = "none";
+    };
 
     /* ------------------ MARCAR INGRESO ------------------ */
-
-    btnMarcarIngreso.onclick = function () {
+    btnMarcarIngreso.onclick = () => {
       const r = registros.find(x => x.dniTitular === ultimoDniConsultado);
       if (!r || r.ingreso) return;
 
@@ -345,37 +300,60 @@
     };
 
     /* ------------------ ESCÁNER DE DNI ------------------ */
-
     document.getElementById("btnCamara").onclick = activarCamara;
 
     function extraerDni(str) {
+      // Genérico: primer grupo de 8 dígitos seguidos
       const m = str.match(/\b\d{8}\b/);
       return m ? m[0] : null;
     }
 
     async function activarCamara() {
-      if (!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Este navegador no soporta cámara.");
+        return;
+      }
+
+      if (!codeReader) {
+        codeReader = new ZXing.BrowserMultiFormatReader();
+      }
 
       if (!escaneando) {
         escaneando = true;
         video.style.display = "block";
         document.getElementById("btnCamara").textContent = "Detener cámara";
 
-        await codeReader.decodeFromVideoDevice(
-          null,
-          "video",
-          (result, err) => {
-            if (result) {
-              const dni = extraerDni(result.getText());
-              if (dni) {
-                dniInput.value = dni;
-                consultar();
-                alert("DNI detectado: " + dni);
-                detenerCamara();
+        const constraints = {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+
+        try {
+          await codeReader.decodeFromConstraints(
+            constraints,
+            "video",
+            (result, err) => {
+              if (result) {
+                const text = result.getText();
+                console.log("Código leído:", text);
+                const dni = extraerDni(text);
+                if (dni) {
+                  dniInput.value = dni;
+                  consultar();
+                  alert("DNI detectado: " + dni);
+                  detenerCamara();
+                }
               }
             }
-          }
-        );
+          );
+        } catch (e) {
+          console.error(e);
+          alert("No se pudo acceder a la cámara: " + e.message);
+          detenerCamara();
+        }
       } else {
         detenerCamara();
       }
@@ -385,8 +363,11 @@
       escaneando = false;
       video.style.display = "none";
       document.getElementById("btnCamara").textContent = "Activar cámara (leer DNI)";
-      if (codeReader) codeReader.reset();
+      if (codeReader) {
+        try { codeReader.reset(); } catch (e) { console.warn(e); }
+      }
     }
   </script>
 </body>
 </html>
+
