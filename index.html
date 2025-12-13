@@ -2,372 +2,300 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de adicionales por DNI</title>
+  <title>Control de Ingreso por DNI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 16px;
       background: #f5f5f9;
     }
-    h2 { margin-bottom: 8px; }
+    h2 { margin-bottom: 6px; }
+
     .card {
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 16px;
       max-width: 430px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       margin-bottom: 16px;
     }
+
     label {
       font-size: 0.9rem;
+      margin-top: 10px;
       display: block;
-      margin-top: 8px;
     }
+
     input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      border-radius: 6px;
+      width: 95%;
+      padding: 10px;
+      border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1rem;
-      box-sizing: border-box;
+      margin-top: 4px;
     }
+
     button {
+      width: 100%;
       margin-top: 12px;
-      padding: 10px 12px;
+      padding: 10px;
       border-radius: 8px;
       border: none;
       font-size: 1rem;
       cursor: pointer;
-      width: 100%;
       background: #304ffe;
-      color: #fff;
+      color: white;
       font-weight: 600;
     }
-    button.secondary { background: #e0e0e0; color: #333; }
-    button.success { background: #00c853; }
-    .result { margin-top: 12px; font-size: 0.95rem; }
+
+    button.secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    button.success {
+      background: #00c853;
+    }
+
+    .result p { margin: 6px 0; }
+
     .msg {
-      padding: 8px 10px;
+      margin-top: 10px;
+      padding: 8px;
       border-radius: 6px;
       font-size: 0.9rem;
-      margin-top: 8px;
     }
-    .msg.info { background: #e3f2fd; color: #0d47a1; }
+
     .msg.error { background: #ffebee; color: #b71c1c; }
-    .small { font-size: 0.8rem; color: #666; margin-top: 4px; }
+    .msg.info { background: #e3f2fd; color: #0d47a1; }
+
     video {
       width: 100%;
-      max-width: 430px;
-      border-radius: 10px;
+      border-radius: 12px;
       margin-top: 10px;
-      background: #000;
-      min-height: 220px; /* ayuda a que sea más grande en pantalla */
+      background: black;
+      min-height: 220px;
       object-fit: cover;
     }
 
-    /* Indicadores */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
-      margin-top: 8px;
     }
+
     .stat-box {
       background: #f5f7ff;
+      padding: 12px;
       border-radius: 8px;
-      padding: 10px 12px;
     }
-    .stat-box.secondary { background: #e8f5e9; }
+
+    .stat-box.secondary {
+      background: #e8f5e9;
+    }
+
     .stat-label {
       font-size: 0.8rem;
       color: #555;
-      margin: 0;
     }
+
     .stat-value {
       font-size: 1.4rem;
       font-weight: 700;
-      margin-top: 4px;
     }
   </style>
 </head>
-<body>
-  <h2>Control de adicionales por DNI</h2>
-  <p class="small">
-    Escanea o ingresa un DNI para ver adicionales y marcar ingreso a la fiesta.
-  </p>
 
-  <!-- Indicadores -->
-  <div class="card">
-    <h3>Resumen rápido</h3>
-    <div class="stats-grid">
-      <div class="stat-box">
-        <p class="stat-label">Familias contempladas</p>
-        <p class="stat-value" id="indTitulares">0</p>
-      </div>
-      <div class="stat-box">
-        <p class="stat-label">Capacidad total</p>
-        <p class="stat-value" id="indPersonasPosibles">0</p>
-      </div>
-      <div class="stat-box secondary">
-        <p class="stat-label">Familias registradas</p>
-        <p class="stat-value" id="indTitularesIngresaron">0</p>
-      </div>
-      <div class="stat-box secondary">
-        <p class="stat-label">Total registrado</p>
-        <p class="stat-value" id="indPersonasIngresaron">0</p>
-      </div>
+<body>
+
+<h2>Control de Ingreso - Fiesta Navidad</h2>
+<p style="font-size:0.85rem;color:#666;">Escanea o ingresa el DNI del titular</p>
+
+<!-- RESUMEN -->
+<div class="card">
+  <h3>Resumen</h3>
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">Familias</div>
+      <div class="stat-value" id="indFamilias">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Personas Invitados</div>
+      <div class="stat-value" id="indCapacidad">0</div>
+    </div>
+    <div class="stat-box secondary">
+      <div class="stat-label">Familias dentro</div>
+      <div class="stat-value" id="indDentroFam">0</div>
+    </div>
+    <div class="stat-box secondary">
+      <div class="stat-label">Personas dentro</div>
+      <div class="stat-value" id="indDentroPers">0</div>
     </div>
   </div>
 
-  <!-- Consulta -->
-  <div class="card">
-    <label for="dniInput">DNI del titular</label>
-    <input id="dniInput" type="text" placeholder="Ejemplo: 12345678" />
+  <button id="btnExportar" class="secondary">Exportar reporte</button>
+</div>
 
-    <button id="btnConsultar">Consultar</button>
-    <button id="btnCamara" class="secondary">Activar cámara (leer DNI)</button>
+<!-- CONSULTA -->
+<div class="card">
+  <label>DNI</label>
+  <input id="dniInput" placeholder="Ej. 12345678" />
 
-    <div id="result" class="result"></div>
+  <button id="btnConsultar">Consultar</button>
+  <button id="btnCamara" class="secondary">Activar cámara</button>
 
-    <button id="btnMarcarIngreso" class="success" style="display:none;">
-      Marcar ingreso a la fiesta
-    </button>
-  </div>
+  <div id="resultado" class="result"></div>
 
-  <!-- Cámara -->
-  <div class="card">
-    <h3>Cámara</h3>
-    <p class="small">
-      Apunta al código de barras del reverso del DNI, acércalo hasta llenar la pantalla y manténlo quieto.
-      Si no lo lee, puedes escribir el DNI manualmente.
-    </p>
-    <video id="video" autoplay playsinline style="display:none;"></video>
-  </div>
+  <button id="btnIngreso" class="success" style="display:none;">
+    Marcar ingreso
+  </button>
+</div>
 
-  <!-- Nuevo registro -->
-  <div id="nuevoRegistroCard" class="card" style="display:none;">
-    <h3>Registrar nuevo titular</h3>
+<!-- CAMARA -->
+<div class="card">
+  <video id="video" autoplay playsinline style="display:none;"></video>
+</div>
 
-    <label>DNI del titular</label>
-    <input id="dniNuevo" type="text" readonly />
+<!-- ZXING -->
+<script src="https://unpkg.com/@zxing/library@0.20.0"></script>
 
-    <label>Nombre del titular</label>
-    <input id="nombreNuevo" type="text" />
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    <label>Adicionales totales</label>
-    <input id="adicionalesNuevo" type="number" min="0" />
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBF1jOtLAMTIJjAWK7_YYJfBFiQWE3bXg",
+    authDomain: "fiestanavidad-e89ef.firebaseapp.com",
+    databaseURL: "https://fiestanavidad-e89ef-default-rtdb.firebaseio.com",
+    projectId: "fiestanavidad-e89ef",
+    storageBucket: "fiestanavidad-e89ef.firebasestorage.app",
+    messagingSenderId: "295453440670",
+    appId: "1:295453440670:web:54d2c1d93d8a0b4ee3198f"
+  };
 
-    <label>Hijos</label>
-    <input id="hijosNuevo" type="number" min="0" />
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    <button id="btnGuardar">Guardar registro</button>
-    <button class="secondary" id="btnCancelar">Cancelar</button>
+  const dniInput = document.getElementById("dniInput");
+  const resultado = document.getElementById("resultado");
+  const btnIngreso = document.getElementById("btnIngreso");
+  const video = document.getElementById("video");
 
-    <div id="msgNuevo" class="msg" style="display:none;"></div>
-  </div>
+  const indFamilias = document.getElementById("indFamilias");
+  const indCapacidad = document.getElementById("indCapacidad");
+  const indDentroFam = document.getElementById("indDentroFam");
+  const indDentroPers = document.getElementById("indDentroPers");
 
-  <!-- Librería ZXing -->
-  <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
+  let invitados = {};
+  let dniActual = null;
+  let reader = null;
+  let escaneando = false;
 
-  <script>
-    /* ------------------ BASE DE DATOS ------------------ */
-    const registros = [
-    ];
-
-    /* ------------------ ELEMENTOS ------------------ */
-    const dniInput = document.getElementById("dniInput");
-    const resultDiv = document.getElementById("result");
-    const nuevoCard = document.getElementById("nuevoRegistroCard");
-    const btnMarcarIngreso = document.getElementById("btnMarcarIngreso");
-    const video = document.getElementById("video");
-
-    const indTitulares = document.getElementById("indTitulares");
-    const indPersonasPosibles = document.getElementById("indPersonasPosibles");
-    const indTitularesIngresaron = document.getElementById("indTitularesIngresaron");
-    const indPersonasIngresaron = document.getElementById("indPersonasIngresaron");
-
-    let ultimoDniConsultado = null;
-    let codeReader = null;
-    let escaneando = false;
-
-    /* ------------------ INDICADORES ------------------ */
-    function actualizarIndicadores() {
-      const familias = registros.length;
-      let personasPosibles = 0;
-      let familiasDentro = 0;
-      let personasDentro = 0;
-
-      registros.forEach(r => {
-        personasPosibles += 1 + r.adicionalesTotales;
-        if (r.ingreso) {
-          familiasDentro += 1;
-          personasDentro += 1 + r.adicionalesTotales;
-        }
-      });
-
-      indTitulares.textContent = familias;
-      indPersonasPosibles.textContent = personasPosibles;
-      indTitularesIngresaron.textContent = familiasDentro;
-      indPersonasIngresaron.textContent = personasDentro;
-    }
+  onValue(ref(db, "INVITADOS"), snap => {
+    invitados = snap.val() || {};
     actualizarIndicadores();
+  });
 
-    /* ------------------ CONSULTAR ------------------ */
-    document.getElementById("btnConsultar").onclick = consultar;
+  function actualizarIndicadores() {
+    let familias = 0, capacidad = 0, dentroFam = 0, dentroPers = 0;
 
-    function consultar() {
-      const dni = dniInput.value.trim();
-      if (!dni) {
-        resultDiv.innerHTML = "<div class='msg error'>Ingresa un DNI.</div>";
-        return;
+    Object.values(invitados).forEach(r => {
+      familias++;
+      const personas = Number(r.ASISTENCIA_TOTAL || 1);
+      capacidad += personas;
+
+      if (r.INGRESO) {
+        dentroFam++;
+        dentroPers += personas;
       }
+    });
 
-      const r = registros.find(x => x.dniTitular === dni);
+    indFamilias.textContent = familias;
+    indCapacidad.textContent = capacidad;
+    indDentroFam.textContent = dentroFam;
+    indDentroPers.textContent = dentroPers;
+  }
 
-      resultDiv.innerHTML = "";
-      nuevoCard.style.display = "none";
-      btnMarcarIngreso.style.display = "none";
-      ultimoDniConsultado = dni;
+  document.getElementById("btnConsultar").onclick = () => {
+    const dni = dniInput.value.trim();
+    dniActual = dni;
+    resultado.innerHTML = "";
+    btnIngreso.style.display = "none";
 
-      if (!r) {
-        resultDiv.innerHTML = `<div class='msg info'>No existe el DNI <strong>${dni}</strong>.</div>`;
-        document.getElementById("dniNuevo").value = dni;
-        nuevoCard.style.display = "block";
-        return;
-      }
-
-      const estado = r.ingreso
-        ? "<span style='color:green;'>✔ Ingresó</span>"
-        : "<span style='color:#b76e00;'>Pendiente</span>";
-
-      resultDiv.innerHTML = `
-        <p><strong>${r.nombreTitular}</strong> (${r.dniTitular})</p>
-        <p>Adicionales: <strong>${r.adicionalesTotales}</strong></p>
-        <p>Hijos: <strong>${r.hijosTotales}</strong></p>
-        <p>Estado: ${estado}</p>
-      `;
-
-      if (!r.ingreso) btnMarcarIngreso.style.display = "block";
+    const r = invitados[dni];
+    if (!r) {
+      resultado.innerHTML = `<div class="msg error">DNI no registrado</div>`;
+      return;
     }
 
-    /* ------------------ NUEVO REGISTRO ------------------ */
-    document.getElementById("btnGuardar").onclick = () => {
-      const dni = document.getElementById("dniNuevo").value;
-      const nombre = document.getElementById("nombreNuevo").value.trim();
-      const adicionales = Number(document.getElementById("adicionalesNuevo").value);
-      const hijos = Number(document.getElementById("hijosNuevo").value);
-      const msg = document.getElementById("msgNuevo");
+    resultado.innerHTML = `
+      <p><strong>${r.TITULAR_NOMBRE}</strong></p>
+      <p>Área: ${r.AREA}</p>
+      <p>Sede: ${r.SEDE}</p>
+      <p>Titular: <strong>${r.ASISTENCIA_TITULAR}</strong></p>
+      <p>Adicional: <strong>${r.ASISTENCIA_ADICIONAL}</strong></p>
+      <p>Hijos: <strong>${r.ASISTENCIA_HIJOS}</strong></p>
+      <p>Total: <strong>${r.ASISTENCIA_TOTAL}</strong></p>
+      <p>Estado: ${r.INGRESO ? "✔ Ingresó" : "Pendiente"}</p>
+    `;
 
-      msg.style.display = "none";
+    if (!r.INGRESO) btnIngreso.style.display = "block";
+  };
 
-      if (!nombre || isNaN(adicionales) || isNaN(hijos)) {
-        msg.textContent = "Completa todos los campos.";
-        msg.className = "msg error";
-        msg.style.display = "block";
-        return;
-      }
-
-      registros.push({
-        dniTitular: dni,
-        nombreTitular: nombre,
-        adicionalesTotales: adicionales,
-        hijosTotales: hijos,
-        ingreso: false
-      });
-
-      consultar();
-      actualizarIndicadores();
-      msg.textContent = "Registrado correctamente.";
-      msg.className = "msg info";
-      msg.style.display = "block";
-    };
-
-    document.getElementById("btnCancelar").onclick = () => {
-      nuevoCard.style.display = "none";
-    };
-
-    /* ------------------ MARCAR INGRESO ------------------ */
-    btnMarcarIngreso.onclick = () => {
-      const r = registros.find(x => x.dniTitular === ultimoDniConsultado);
-      if (!r || r.ingreso) return;
-
-      r.ingreso = true;
-      consultar();
-      actualizarIndicadores();
-      alert("Ingreso registrado ✔");
-    };
-
-    /* ------------------ ESCÁNER DE DNI ------------------ */
-    document.getElementById("btnCamara").onclick = activarCamara;
-
-    function extraerDni(str) {
-      // Genérico: primer grupo de 8 dígitos seguidos
-      const m = str.match(/\b\d{8}\b/);
-      return m ? m[0] : null;
+  btnIngreso.onclick = async () => {
+    const r = invitados[dniActual];
+    if (!r || r.INGRESO) {
+      alert("Este DNI ya registró ingreso");
+      return;
     }
 
-    async function activarCamara() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("Este navegador no soporta cámara.");
-        return;
-      }
+    await update(ref(db, "INVITADOS/" + dniActual), {
+      INGRESO: true,
+      FECHA_INGRESO: new Date().toISOString()
+    });
 
-      if (!codeReader) {
-        codeReader = new ZXing.BrowserMultiFormatReader();
-      }
+    alert("Ingreso registrado ✔");
+    btnIngreso.style.display = "none";
+  };
 
-      if (!escaneando) {
-        escaneando = true;
-        video.style.display = "block";
-        document.getElementById("btnCamara").textContent = "Detener cámara";
+  document.getElementById("btnCamara").onclick = async () => {
+    if (!reader) reader = new ZXing.BrowserMultiFormatReader();
 
-        const constraints = {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
+    if (!escaneando) {
+      escaneando = true;
+      video.style.display = "block";
+
+      reader.decodeFromVideoDevice(null, video, res => {
+        if (res) {
+          const match = res.getText().match(/\d{8}/);
+          if (match) {
+            dniInput.value = match[0];
+            document.getElementById("btnConsultar").click();
+            reader.reset();
+            video.style.display = "none";
+            escaneando = false;
           }
-        };
-
-        try {
-          await codeReader.decodeFromConstraints(
-            constraints,
-            "video",
-            (result, err) => {
-              if (result) {
-                const text = result.getText();
-                console.log("Código leído:", text);
-                const dni = extraerDni(text);
-                if (dni) {
-                  dniInput.value = dni;
-                  consultar();
-                  alert("DNI detectado: " + dni);
-                  detenerCamara();
-                }
-              }
-            }
-          );
-        } catch (e) {
-          console.error(e);
-          alert("No se pudo acceder a la cámara: " + e.message);
-          detenerCamara();
         }
-      } else {
-        detenerCamara();
-      }
+      });
     }
+  };
 
-    function detenerCamara() {
-      escaneando = false;
-      video.style.display = "none";
-      document.getElementById("btnCamara").textContent = "Activar cámara (leer DNI)";
-      if (codeReader) {
-        try { codeReader.reset(); } catch (e) { console.warn(e); }
-      }
-    }
-  </script>
+  document.getElementById("btnExportar").onclick = () => {
+    let csv = "DNI,NOMBRE,AREA,SEDE,TOTAL,INGRESO,FECHA\n";
+    Object.entries(invitados).forEach(([dni, r]) => {
+      csv += `${dni},"${r.TITULAR_NOMBRE}",${r.AREA},${r.SEDE},${r.ASISTENCIA_TOTAL},${r.INGRESO ? "SI" : "NO"},${r.FECHA_INGRESO || ""}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "reporte_ingresos.csv";
+    a.click();
+  };
+</script>
+
 </body>
 </html>
-
